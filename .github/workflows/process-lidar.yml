@@ -1,0 +1,65 @@
+name: Process LiDAR
+
+on:
+  push:
+    paths:
+      - 'data/raw/**'
+  workflow_dispatch:
+
+jobs:
+  process-lidar:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      # ── Checkout ───────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Conda environment (PDAL requires conda) ───────────
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: '3.12'
+          channels: conda-forge
+          activate-environment: hack
+          auto-activate-base: false
+
+      - name: Install system deps via conda
+        run: |
+          conda install -y pdal python-pdal laspy
+
+      - name: Install Python deps
+        run: |
+          pip install -r requirements.txt
+
+      # ── Process all LAZ files ──────────────────────────────
+      - name: Run pipeline
+        run: |
+          python run.py --no-aps
+
+      # ── Upload artifacts ───────────────────────────────────
+      - name: Upload processing artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lidar-outputs
+          path: |
+            data/output/*.dxf
+            data/output/*.obj
+            data/output/*.mtl
+            data/output/*.geojson
+            data/output/*.zip
+          if-no-files-found: warn
+
+      # ── APS Upload (conditional on secrets) ────────────────
+      - name: Upload to APS
+        if: ${{ env.APS_CLIENT_ID != '' }}
+        env:
+          APS_CLIENT_ID: ${{ secrets.APS_CLIENT_ID }}
+          APS_CLIENT_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
+          APS_BUCKET_KEY: ${{ secrets.APS_BUCKET_KEY }}
+        run: |
+          python run.py

@@ -1,0 +1,13 @@
+laspy[laz]==2.5.4
+pdal
+numpy
+scipy
+shapely
+geopandas
+pyproj
+scikit-learn
+trimesh
+ezdxf
+requests
+python-dotenv
+matplotlib

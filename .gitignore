@@ -1,1 +1,29 @@
+# Environment
 .env
+.venv/
+__pycache__/
+*.pyc
+
+# Data caches
+data/somerville/
+data/output/
+data/raw/
+*.laz
+*.las
+*.LAZ
+*.LAS
+
+# Generated artifacts
+*.tif
+*.obj
+*.mtl
+*.dxf
+*.bin
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
