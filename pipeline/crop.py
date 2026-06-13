@@ -20,17 +20,10 @@ def las_crs(path):
     with laspy.open(path) as f:
         vlrs = f.header.vlrs
         for vlr in vlrs:
-            if vlr.record_id == 2112:  # WKT
-                wkt = vlr.record_data.decode("utf-8", errors="ignore").strip("\x00")
+            if vlr.record_id == 2112:  # WKT CRS VLR
+                # laspy WktCoordinateSystemVlr exposes .string; raw VLRs use .record_data
+                wkt = vlr.string if hasattr(vlr, "string") else vlr.record_data.decode("utf-8", errors="ignore").strip("\x00")
                 return pyproj.CRS.from_wkt(wkt)
-        # Try GeoTIFF keys
-        for vlr in vlrs:
-            if vlr.record_id == 34735:
-                # Attempt EPSG extraction from GeoTIFF key directory
-                data = vlr.record_data
-                if len(data) >= 8:
-                    # Simple heuristic: look for EPSG in the key entries
-                    pass
     # Fallback: assume UTM or ask user
     logger.warning("Could not extract CRS from %s; assuming EPSG:32619 (UTM 19N)", path)
     return pyproj.CRS.from_epsg(32619)

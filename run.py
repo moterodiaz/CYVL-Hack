@@ -25,7 +25,7 @@ import numpy as np
 
 import config
 from pipeline.crop import las_crs, get_center
-from pipeline.segment import ground_mask_pdal, split_ground, voxel_downsample
+from pipeline.segment import ground_mask_pdal, ground_mask_numpy, split_ground, voxel_downsample
 from pipeline.ground_mesh import ground_grid_mesh
 from pipeline.to_cad import write_obj, write_mtl
 from pipeline.contours import generate_contours, contours_to_geojson
@@ -82,8 +82,13 @@ def process_file(laz_path, output_dir):
             roi_cx + roi_m / 2, roi_cy + roi_m / 2)
     logger.info("ROI bbox: %s (%.0fm)", bbox, roi_m)
 
-    # Step 1: PDAL SMRF ground classification
-    xyz, gmask = ground_mask_pdal(laz_path, roi_bbox=bbox)
+    # Step 1: ground classification (PDAL SMRF preferred, numpy fallback)
+    try:
+        import pdal  # noqa: F401
+        xyz, gmask = ground_mask_pdal(laz_path, roi_bbox=bbox)
+    except ModuleNotFoundError:
+        logger.warning("PDAL not available — using numpy ground classifier")
+        xyz, gmask = ground_mask_numpy(laz_path, roi_bbox=bbox)
     ground, nonground = split_ground(xyz, gmask)
     logger.info("Points: %d total, %d ground, %d non-ground",
                 len(xyz), len(ground), len(nonground))

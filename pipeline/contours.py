@@ -33,7 +33,7 @@ def generate_contours(ground_pts, bbox, interval=1.0, cell=0.5):
     # Build elevation grid
     xi = np.linspace(xmin, xmax, nx)
     yi = np.linspace(ymin, ymax, ny)
-    grid = np.full((ny, nx), np.nan)
+    grid = np.zeros((ny, nx))
     cnt = np.zeros((ny, nx))
 
     # Bin points into grid cells
@@ -45,6 +45,7 @@ def generate_contours(ground_pts, bbox, interval=1.0, cell=0.5):
 
     valid = cnt > 0
     grid[valid] /= cnt[valid]
+    grid[~valid] = np.nan
 
     # Fill NaN cells with nearest valid value
     if not valid.all():
